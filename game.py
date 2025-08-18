@@ -1,12 +1,7 @@
 from time import sleep
 from player import Player
+from constants import *
 
-# set total clues and empty inventory.
-# set menu text for easier recall
-menu = 'Move Commands: Go North | Go South | Go East | Go West | Exit'
-alt_commands = 'Add to Inventory: Get "item name".\nTo see this again: Help'
-total_clues = 7
-inventory = []
 game_running = True  # start exit condition variable
 
 # define all functions that will be called in the loop
@@ -20,28 +15,13 @@ def show_instructions():  #function to print a welcome message and a list of com
     print(f'Murder at Warner Manor\nCollect all 7 clues to arrest the true murderer in the Master Bedroom'
           f'\n{menu}\n{alt_commands}\n' + '*' * (len(menu)))
 
-def show_status(player_location, rooms):  # display location, inventory, and items seen to player
+def show_status(player_location, player, rooms):  # display location, inventory, and items seen to player
     if "Item" in rooms[player_location]:
-        print(f'You are in the {player_location}.\nInventory: {inventory}\n'
+        print(f'You are in the {player_location}.\nInventory: {player.inventory}\n'
               f'You see the {rooms[player_location]["Item"]}\n' + '-' * (len(menu)), '\nEnter your move:')
     else:
-        print(f'You are in the {player_location}.\nInventory: {inventory}\n'
+        print(f'You are in the {player_location}.\nInventory: {player.inventory}\n'
               f'No items to be seen here\n' + '-' * (len(menu)), '\nEnter your move:')
-
-def get(location, item, clue, rooms):  # A get function to obtain item from room
-    if "Item" in rooms[location]: #validate that the item is in the room
-        if item != rooms[location]["Item"].lower(): #validate that the correct item is being retrived
-            print(f'Sorry, you cannot get {item} from here. Please try again.\n' + '-' * (len(menu)))
-            return clue
-        else: #if the item is in the room and valid, add to inventory, update clue count, and delete from the dictionary
-            print(f'You obtain {item}\n' + '-' * (len(menu)))
-            inventory.append(item.title())
-            del rooms[location]["Item"]
-            clue += 1
-            return clue
-    else: #if no items exist let the player know their input is invalid
-        print(f'There is no {item} here\n' + '-' * (len(menu)))
-        return clue
 
 def end(ending):  # function to display different endings
     global game_running
@@ -81,12 +61,12 @@ def main():  # initialize game loop
         'Master Bedroom': {'West': 'Great Hall', 'South': 'Bathroom', 'Item': 'Body'}
     }
     player = Player('Foyer')
-    clues_collected = 0
+    clues_collected = len(player.inventory)
 
     show_instructions()  # Show introduction, goal, and commands to player
 
     while game_running:  # Create Exit Condition
-        show_status(player.location, rooms)  # display status from function
+        show_status(player.location,player, rooms)  # display status from function
         command = input('>').lower().strip()  # Get user input on command, make lower case, and strip unneeded spaces
         split_command = command.split()  # split the command into a list of single words
         if command in ('exit', 'quit'):  # Exit the game
@@ -94,13 +74,32 @@ def main():  # initialize game loop
         elif command == 'help':  # reprint directions for user to remember commands
             show_instructions()
         elif len(split_command) == 2 and split_command[0] == 'go':  # validate go command and call move function
-            player.move(split_command[1], rooms)
-            if player.location == 'Master Bedroom':
-                end(clues_collected)
+            direction_raw = split_command[1]
+            direction = direction_raw.title()
+            if direction not in VALID_MOVES:
+                print('Invalid command. Please try again\n' + '-' * len(menu))
+            else:
+                success = player.move(direction, rooms)
+                if success:
+                    print(f'You moved to the {player.location}\n' + '-' * len(menu))
+                    if player.location == 'Master Bedroom':
+                        end(player.clue_count)
+                else:
+                    print(f'Sorry, you cannot move {direction.lower()} from here. Please try again.\n' + '-' * len(menu))
         elif len(split_command) >= 2 and split_command[0] == 'get':  # validate get command and call get function
             item_to_get = " ".join(split_command[1:])
-            clues_collected = get(player.location, item_to_get, clues_collected, rooms)
+            item = item_to_get.title()
+            room = rooms[player.location]
+            room_item = room.get("Item")
+            if room_item:
+                success = player.get(item, rooms)
+                if success:
+                    print(f'You found {item} at {player.location}\n' + '-' * len(menu))
+                else:
+                    print(f'Sorry you can not get {item} from here. Please try again.\n' + '-' * len(menu))
+            else:
+                print(f'There is no {item} here\n' + '-' * len(menu))
         else:  # if the input is invalid let the user know
-            print('Invalid command. Please try again\n' + '-' * (len(menu)))
+            print('Invalid command. Please try again\n' + '-' * len(menu))
 
 if __name__ == '__main__': main()

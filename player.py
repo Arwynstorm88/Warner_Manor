@@ -1,20 +1,23 @@
 
 class Player:
-    def __init__(self, starting_room):
+    def __init__(self, starting_room,):
         self.location = starting_room
         self.inventory = []
+        self.clue_count = 0
 
     def move(self, direction, rooms):
-        VALID_MOVES = {'North', 'South', 'East', 'West'}
-        movement = direction.capitalize()
-        if movement not in VALID_MOVES:
-            print('Invalid command. Please try again.\n' + '-' * 20)
-            return self.location
-        elif movement in rooms[self.location]:
-            new_location = rooms[self.location][movement]
-            print(f'You moved to the {new_location}\n' + '-' * 20)
+        if direction in rooms[self.location]:
+            new_location = rooms[self.location][direction]
             self.location = new_location
-            return self.location
+            return True
         else:
-            print(f'Sorry, you cannot move {direction} from here. Please try again.\n' + '-' * 20)
-            return self.location
+            return False
+
+    def get(self, item, rooms): # A get function to obtain item from room
+        room_item = rooms[self.location].get("Item")
+        if item == room_item:
+            self.clue_count += 1
+            self.inventory.append(item)
+            rooms[self.location].pop("Item", None)
+            return True
+        return False

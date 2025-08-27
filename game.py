@@ -1,5 +1,6 @@
 from time import sleep
 from player import Player
+from room import *
 from constants import *
 
 game_running = True  # start exit condition variable
@@ -14,14 +15,6 @@ def type_out(text, delay=0.03):  # function to create a typing effect for end me
 def show_instructions():  #function to print a welcome message and a list of commands
     print(f'Murder at Warner Manor\nCollect all 7 clues to arrest the true murderer in the Master Bedroom'
           f'\n{menu}\n{alt_commands}\n' + '*' * (len(menu)))
-
-def show_status(player_location, player, rooms):  # display location, inventory, and items seen to player
-    if "Item" in rooms[player_location]:
-        print(f'You are in the {player_location}.\nInventory: {player.inventory}\n'
-              f'You see the {rooms[player_location]["Item"]}\n' + '-' * (len(menu)), '\nEnter your move:')
-    else:
-        print(f'You are in the {player_location}.\nInventory: {player.inventory}\n'
-              f'No items to be seen here\n' + '-' * (len(menu)), '\nEnter your move:')
 
 def end(ending):  # function to display different endings
     global game_running
@@ -47,26 +40,13 @@ def end(ending):  # function to display different endings
     game_running = False
 
 def main():  # initialize game loop
-    #dictionary of rooms, their valid directions, and items contained
-    rooms = {
-        'Foyer': {'East': 'Great Hall', 'North': 'Carport'},
-        'Carport': {'East': 'Guest House', 'South': 'Foyer', 'Item': 'Bloody Tire Iron'},
-        'Great Hall': {'North': 'Guest House', 'South': 'Kitchen', 'West': 'Foyer', 'East': 'Master Bedroom',
-                       'Item': 'Polaroid'},
-        'Guest House': {'South': 'Great Hall', 'West': 'Carport', 'East': 'Boat House', 'Item': 'Wallet'},
-        'Boat House': {'West': 'Guest House', 'Item': 'Half Smoked Cigarette'},
-        'Kitchen': {'North': 'Great Hall', 'West': 'Library', 'East': 'Bathroom', 'Item': "Guest List"},
-        'Library': {'East': 'Kitchen', 'Item': 'Confession Letter'},
-        'Bathroom': {'West': 'Kitchen', 'North': 'Master Bedroom', 'Item': 'Bloody Sweater'},
-        'Master Bedroom': {'West': 'Great Hall', 'South': 'Bathroom', 'Item': 'Body'}
-    }
+
     player = Player('Foyer')
-    clues_collected = len(player.inventory)
 
     show_instructions()  # Show introduction, goal, and commands to player
 
     while game_running:  # Create Exit Condition
-        show_status(player.location,player, rooms)  # display status from function
+        player.describe(room_map)  # display status from function
         command = input('>').lower().strip()  # Get user input on command, make lower case, and strip unneeded spaces
         split_command = command.split()  # split the command into a list of single words
         if command in ('exit', 'quit'):  # Exit the game
@@ -79,7 +59,7 @@ def main():  # initialize game loop
             if direction not in VALID_MOVES:
                 print('Invalid command. Please try again\n' + '-' * len(menu))
             else:
-                success = player.move(direction, rooms)
+                success = player.move(direction, room_map)
                 if success:
                     print(f'You moved to the {player.location}\n' + '-' * len(menu))
                     if player.location == 'Master Bedroom':
@@ -89,10 +69,10 @@ def main():  # initialize game loop
         elif len(split_command) >= 2 and split_command[0] == 'get':  # validate get command and call get function
             item_to_get = " ".join(split_command[1:])
             item = item_to_get.title()
-            room = rooms[player.location]
+            room = room_map[player.location]
             room_item = room.get("Item")
             if room_item:
-                success = player.get(item, rooms)
+                success = player.get(item, room_map)
                 if success:
                     print(f'You found {item} at {player.location}\n' + '-' * len(menu))
                 else:

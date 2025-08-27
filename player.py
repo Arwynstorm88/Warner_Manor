@@ -1,7 +1,7 @@
-
+from constants import menu
 class Player:
-    def __init__(self, starting_room,):
-        self.location = starting_room
+    def __init__(self, current_room):
+        self.location = current_room
         self.inventory = []
         self.clue_count = 0
 
@@ -21,3 +21,11 @@ class Player:
             rooms[self.location].pop("Item", None)
             return True
         return False
+
+    def describe(self, rooms):
+        if "Item" in rooms[self.location]:
+            print(f'You are in the {self.location}.\nInventory: {self.inventory}\n'
+                f'You see the {rooms[self.location]["Item"]}\n' + '-' * (len(menu)), '\nEnter your move:')
+        else:
+            print(f'You are in the {self.location}.\nInventory: {self.inventory}\n'
+                f'No items to be seen here\n' + '-' * (len(menu)), '\nEnter your move:')
